@@ -1,0 +1,46 @@
+#!/bin/bash
+
+GIT_DIR=/home/chairs/repo
+WORK_TREE=/home/chairs/app
+#export DATABASE_USER='rails'
+#export DATABASE_PASSWORD='xfGhl495dl'
+
+export NODE_ENV=production
+. ~/.bashrc
+#PATH=$RVM_PATH:$PATH
+
+while read oldrev newrev ref
+do
+    if [[ $ref =~ .*/master$ ]];
+    then
+        echo "Master ref received.  Deploying master branch to production..."
+        mkdir -p $WORK_TREE
+        git --work-tree=$WORK_TREE --git-dir=$GIT_DIR checkout -f
+				#cp /home/chairs/.env $WORK_TREE/.env
+				#cp /home/chairs/secrets.yml $WORK_TREE/config
+        #mkdir -p $WORK_TREE/shared/pids $WORK_TREE/shared/sockets $WORK_TREE/shared/log
+
+        echo "start deploy tasks"
+        cd $WORK_TREE
+				echo "NPM install"
+        npm install
+				#echo "npm run knex migrate:latest"
+        #rake db:setup
+       	#npm run knex migrate:latest
+				#echo "rake db:seed"
+				#rake db:seed
+				#echo "rake assets:precompile"
+        #rake assets:precompile
+				#echo "sidekiq"
+				#kill $(cat $WORK_TREE/shared/pids/sidekiq.pid)
+				#bundle exec sidekiq -d -L $WORK_TREE/log/sidekiq.log -P $WORK_TREE/shared/pids/sidekiq.pid
+				echo "restarting services"
+        pm2 restart www
+        sudo service nginx restart
+        # end deploy tasks
+        echo "Git hooks deploy complete"
+    else
+        echo "Ref $ref successfully received.  Doing nothing: only the master branch may be deployed on this server."
+    fi
+done
+
